@@ -1,2 +1,2 @@
-# WaferPro-report
-A tool for automatically generating HTML reports from Keysight IC-CAP WaferPro measurement file.
+# icacap-waferpro-tools
+Python tools for parsing Keysight IC-CAP MDM files and WaferPro CSV measurement data file.
