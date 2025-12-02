@@ -42,6 +42,15 @@ Functions for parsing IC-CAP MDM files:
 - `mdm_get_block(filename, block_index)` - Get specific data block
 - `mdm_block_count(filename)` - Count data blocks in file
 
+### MDM HTML Report generator (`mdm_to_html.py`)
+
+- `generate_html_viewer(filename, output_html=None, auto_open=True)` - Converts an MDM file into an interactive HTML document.
+
+**Parameters:**
+- `filename` - path to the MDM file
+- `output_html` - path to save HTML (optional)
+- `auto_open` - automatically open in the browser (default: `True`)
+
 ## Examples
 
 See the `examples/` directory for more usage examples.
