@@ -1,5 +1,5 @@
 # iccap-waferpro-tools
-Python tools for parsing **Keysight IC-CAP** MDM files and **Keysight IC-CAP WaferPro** measurement data. Generate interactive HTML reports and analyze semiconductor device measurements and statistics.
+Python tools for parsing **Keysight IC-CAP** MDM files and **Keysight IC-CAP WaferPro** measurement data. Generate interactive HTML reports for analyze semiconductor device measurements and statistics.
 
 [![Python 3.6+](https://img.shields.io/badge/python-3.6+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
