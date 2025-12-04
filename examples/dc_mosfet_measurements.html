@@ -1,0 +1,3256 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>dc_mosfet_measurements.mdm</title>
+    <script src="https://cdn.plot.ly/plotly-2.27.0.min.js"></script>
+    <style>
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #fafafa;
+            --bg-tertiary: #f5f5f5;
+            --bg-card: #ffffff;
+            --border-color: #eeeeee;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --text-muted: #999999;
+            --accent-blue: #0066cc;
+            --accent-green: #22863a;
+            --accent-orange: #e36209;
+            --accent-red: #cb2431;
+            --font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: var(--font-family);
+            background: var(--bg-primary);
+            min-height: 100vh;
+            color: var(--text-primary);
+            line-height: 1.6;
+            font-size: 14px;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 1.5rem 2rem;
+        }
+        
+        header {
+            text-align: left;
+            padding: 1rem 0 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+            margin-bottom: 1.5rem;
+        }
+        
+        h1 {
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: var(--text-primary);
+        }
+        
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        @media (max-width: 1200px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        .card {
+            background: var(--bg-card);
+            padding: 0;
+        }
+        
+        .card-title {
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-muted);
+            margin-bottom: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .regime-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        
+        .regime-table th {
+            color: var(--text-muted);
+            font-weight: 500;
+            padding: 0.5rem 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 12px;
+        }
+        
+        .regime-table td {
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+        
+        .regime-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .var-name {
+            color: var(--text-primary);
+            font-weight: 500;
+        }
+        
+        .var-unit {
+            color: var(--text-muted);
+        }
+        
+        .var-node {
+            color: var(--text-primary);
+        }
+        
+        .var-smu {
+            color: var(--text-secondary);
+        }
+        
+        .var-sweep {
+            color: var(--text-secondary);
+        }
+        
+        .metadata-grid {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+        }
+        
+        .metadata-item {
+            display: flex;
+            gap: 0.5rem;
+            align-items: baseline;
+        }
+        
+        .metadata-label {
+            font-size: 12px;
+            color: var(--text-muted);
+        }
+        
+        .metadata-value {
+            color: var(--text-primary);
+            font-size: 13px;
+        }
+        
+        .graph-section {
+            margin: 1.5rem 0;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .graph-card {
+            background: var(--bg-card);
+        }
+        
+        .graph-controls {
+            padding: 0 0 1rem 0;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1.5rem;
+            align-items: flex-start;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+        
+        .control-label {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        
+        select {
+            font-family: var(--font-family);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            padding: 0.4rem 0.6rem;
+            border-radius: 4px;
+            font-size: 13px;
+            cursor: pointer;
+            min-width: 120px;
+        }
+        
+        select:hover {
+            border-color: var(--text-muted);
+        }
+        
+        select:focus {
+            outline: none;
+            border-color: var(--accent-blue);
+        }
+        
+        .checkbox-group {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+            cursor: pointer;
+        }
+        
+        .checkbox-item input {
+            cursor: pointer;
+            accent-color: #000000;
+        }
+        
+        .checkbox-item label {
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-muted);
+            transition: color 0.15s;
+        }
+        
+        .checkbox-item input:checked + label {
+            color: #000000;
+            font-weight: 500;
+        }
+        
+        #plot {
+            width: 100%;
+            height: 600px;
+        }
+        
+        .data-table-section {
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+        
+        .data-table-card {
+            background: var(--bg-card);
+        }
+        
+        .table-header {
+            padding: 0 0 1rem 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+        
+        .table-title {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.3px;
+        }
+        
+        .table-container {
+            overflow-x: auto;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid var(--border-color);
+        }
+        
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 12px;
+        }
+        
+        .data-table th {
+            background: var(--bg-secondary);
+            color: var(--text-muted);
+            font-weight: 500;
+            padding: 0.5rem 0.75rem;
+            text-align: right;
+            border-bottom: 1px solid var(--border-color);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            font-size: 11px;
+        }
+        
+        .data-table th:first-child {
+            text-align: center;
+        }
+        
+        .data-table td {
+            padding: 0.35rem 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            text-align: right;
+            color: var(--text-primary);
+        }
+        
+        .data-table td:first-child {
+            text-align: center;
+            color: var(--text-muted);
+        }
+        
+        .data-table tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .plot-type-btns {
+            display: flex;
+            gap: 2px;
+        }
+        
+        .plot-type-btn {
+            font-family: var(--font-family);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.4rem 0.6rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .plot-type-btn:hover {
+            border-color: var(--text-muted);
+        }
+        
+        .plot-type-btn.active {
+            background: var(--text-primary);
+            color: var(--bg-primary);
+            border-color: var(--text-primary);
+        }
+        
+        .action-btn {
+            font-family: var(--font-family);
+            background: var(--bg-primary);
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 0.4rem 0.75rem;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        
+        .action-btn:hover {
+            border-color: var(--text-muted);
+            color: var(--text-primary);
+        }
+        
+        .action-btn.success {
+            background: var(--accent-green);
+            color: white;
+            border-color: var(--accent-green);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>dc_mosfet_measurements.mdm</h1>
+        </header>
+        
+        <div class="grid">
+            <div class="card">
+                <h2 class="card-title">INPUTS</h2>
+                <table class="regime-table">
+                    <thead>
+                        <tr>
+                            <th>Variable</th>
+                            <th>Unit</th>
+                            <th>Node</th>
+                            <th>SMU</th>
+                            <th>Sweep</th>
+                            <th>Option</th>
+                        </tr>
+                    </thead>
+                    <tbody id="inputs-table"></tbody>
+                </table>
+            </div>
+            
+            <div class="card">
+                <h2 class="card-title">OUTPUTS</h2>
+                <table class="regime-table">
+                    <thead>
+                        <tr>
+                            <th>Variable</th>
+                            <th>Unit</th>
+                            <th>Node</th>
+                            <th>SMU</th>
+                            <th>Option</th>
+                        </tr>
+                    </thead>
+                    <tbody id="outputs-table"></tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="card" style="margin-bottom: 1.5rem;">
+            <h2 class="card-title">MEASUREMENT INFO</h2>
+            <div class="metadata-grid" id="metadata-grid"></div>
+        </div>
+        
+        <section class="graph-section">
+            <div class="graph-card">
+                <div class="graph-controls">
+                    <div class="control-group">
+                        <span class="control-label">X-Axis</span>
+                        <select id="x-axis-select"></select>
+                    </div>
+                    <div class="control-group">
+                        <span class="control-label">Y-Axis</span>
+                        <div class="checkbox-group" id="y-axis-checkboxes"></div>
+                    </div>
+                    <div class="control-group">
+                        <span class="control-label">X Scale</span>
+                        <div class="plot-type-btns" id="x-scale-btns">
+                            <button class="plot-type-btn active" data-scale="linear">Linear</button>
+                            <button class="plot-type-btn" data-scale="log">Log</button>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <span class="control-label">Y Scale</span>
+                        <div class="plot-type-btns" id="y-scale-btns">
+                            <button class="plot-type-btn active" data-scale="linear">Linear</button>
+                            <button class="plot-type-btn" data-scale="log">Log</button>
+                        </div>
+                    </div>
+                    <div class="control-group">
+                        <span class="control-label">Sweep</span>
+                        <select id="block-select">
+                            <option value="all">All</option>
+                        </select>
+                    </div>
+                    <div class="control-group" style="margin-left: auto;">
+                        <button class="action-btn" id="save-plot-btn">Save PNG</button>
+                    </div>
+                </div>
+                <div id="plot"></div>
+            </div>
+        </section>
+        
+        <section class="data-table-section">
+            <div class="data-table-card">
+                <div class="table-header">
+                    <h2 class="table-title">Measurement Data</h2>
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div class="control-group">
+                            <select id="table-block-select">
+                                <option value="all">All</option>
+                            </select>
+                        </div>
+                        <button class="action-btn" id="copy-table-btn">Copy Data</button>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <table class="data-table">
+                        <thead id="table-head"></thead>
+                        <tbody id="table-body"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+    </div>
+    
+    <script>
+        // Data from MDM file
+        const mdmData = [
+  {
+    "index": 0,
+    "vars": {
+      "vb": 0.0,
+      "vs": 0.0,
+      "vd": 0.025
+    },
+    "columns": [
+      "vg",
+      "id",
+      "ig",
+      "is",
+      "ib"
+    ],
+    "data": [
+      {
+        "vg": 0.0,
+        "id": 1.02410181407e-14,
+        "ig": 0.0,
+        "is": -1.8921557525e-15,
+        "ib": -6.27289690949e-15
+      },
+      {
+        "vg": 0.05,
+        "id": 1.36546566157e-14,
+        "ig": 0.0,
+        "is": -4.74724434847e-15,
+        "ib": -6.27289534026e-15
+      },
+      {
+        "vg": 0.1,
+        "id": 4.09638671315e-14,
+        "ig": 0.0,
+        "is": -3.86843381644e-14,
+        "ib": -6.27289377103e-15
+      },
+      {
+        "vg": 0.15,
+        "id": 1.70682351733e-13,
+        "ig": 0.0,
+        "is": -1.74885498874e-13,
+        "ib": -6.27289220179e-15
+      },
+      {
+        "vg": 0.2,
+        "id": 7.74895933829e-13,
+        "ig": 0.0,
+        "is": -7.9040762234e-13,
+        "ib": -6.27289063256e-15
+      },
+      {
+        "vg": 0.25,
+        "id": 3.46483436411e-12,
+        "ig": 0.0,
+        "is": -3.57018620338e-12,
+        "ib": -6.27288906332e-15
+      },
+      {
+        "vg": 0.3,
+        "id": 1.56377994307e-11,
+        "ig": 0.0,
+        "is": -1.61058873254e-11,
+        "ib": -6.27288749409e-15
+      },
+      {
+        "vg": 0.35,
+        "id": 7.03409052765e-11,
+        "ig": 0.0,
+        "is": -7.24645162842e-11,
+        "ib": -6.27288592487e-15
+      },
+      {
+        "vg": 0.4,
+        "id": 3.14713828977e-10,
+        "ig": 0.0,
+        "is": -3.24227241868e-10,
+        "ib": -6.2728843557e-15
+      },
+      {
+        "vg": 0.45,
+        "id": 1.39205066263e-09,
+        "ig": 0.0,
+        "is": -1.43413238368e-09,
+        "ib": -6.27288278674e-15
+      },
+      {
+        "vg": 0.5,
+        "id": 6.0179185501e-09,
+        "ig": 0.0,
+        "is": -6.19986193272e-09,
+        "ib": -6.27288121867e-15
+      },
+      {
+        "vg": 0.55,
+        "id": 2.49244281712e-08,
+        "ig": 0.0,
+        "is": -2.56780622851e-08,
+        "ib": -6.27287965421e-15
+      },
+      {
+        "vg": 0.6,
+        "id": 9.60616761126e-08,
+        "ig": 0.0,
+        "is": -9.89665193885e-08,
+        "ib": -6.27287810293e-15
+      },
+      {
+        "vg": 0.65,
+        "id": 3.32263003289e-07,
+        "ig": 0.0,
+        "is": -3.42311239815e-07,
+        "ib": -6.27287659331e-15
+      },
+      {
+        "vg": 0.7,
+        "id": 9.76644234007e-07,
+        "ig": 0.0,
+        "is": -1.00618208565e-06,
+        "ib": -6.27287518673e-15
+      },
+      {
+        "vg": 0.75,
+        "id": 2.28304855475e-06,
+        "ig": 0.0,
+        "is": -2.35210310461e-06,
+        "ib": -6.27287394726e-15
+      },
+      {
+        "vg": 0.8,
+        "id": 4.21463568138e-06,
+        "ig": 0.0,
+        "is": -4.34212442087e-06,
+        "ib": -6.2728728656e-15
+      },
+      {
+        "vg": 0.85,
+        "id": 6.49386540628e-06,
+        "ig": 0.0,
+        "is": -6.69031434719e-06,
+        "ib": -6.27287187168e-15
+      },
+      {
+        "vg": 0.9,
+        "id": 8.87905241675e-06,
+        "ig": 0.0,
+        "is": -9.14767817018e-06,
+        "ib": -6.27287090452e-15
+      },
+      {
+        "vg": 0.95,
+        "id": 1.12508942026e-05,
+        "ig": 0.0,
+        "is": -1.15913044971e-05,
+        "ib": -6.27286993399e-15
+      },
+      {
+        "vg": 1.0,
+        "id": 1.35695968743e-05,
+        "ig": 0.0,
+        "is": -1.39801952259e-05,
+        "ib": -6.27286895005e-15
+      },
+      {
+        "vg": 1.05,
+        "id": 1.58284724676e-05,
+        "ig": 0.0,
+        "is": -1.63074596309e-05,
+        "ib": -6.27286795102e-15
+      },
+      {
+        "vg": 1.1,
+        "id": 1.80307379214e-05,
+        "ig": 0.0,
+        "is": -1.85764115644e-05,
+        "ib": -6.27286693769e-15
+      },
+      {
+        "vg": 1.15,
+        "id": 2.01810563805e-05,
+        "ig": 0.0,
+        "is": -2.07918549041e-05,
+        "ib": -6.27286591125e-15
+      },
+      {
+        "vg": 1.2,
+        "id": 2.22832613001e-05,
+        "ig": 0.0,
+        "is": -2.2957738745e-05,
+        "ib": -6.27286487267e-15
+      },
+      {
+        "vg": 1.25,
+        "id": 2.43401309284e-05,
+        "ig": 0.0,
+        "is": -2.50769251152e-05,
+        "ib": -6.27286382266e-15
+      },
+      {
+        "vg": 1.3,
+        "id": 2.63536619968e-05,
+        "ig": 0.0,
+        "is": -2.71514708465e-05,
+        "ib": -6.2728627617e-15
+      },
+      {
+        "vg": 1.35,
+        "id": 2.832536233e-05,
+        "ig": 0.0,
+        "is": -2.91829291043e-05,
+        "ib": -6.27286169018e-15
+      },
+      {
+        "vg": 1.4,
+        "id": 3.02564575627e-05,
+        "ig": 0.0,
+        "is": -3.11725623219e-05,
+        "ib": -6.27286060842e-15
+      },
+      {
+        "vg": 1.45,
+        "id": 3.21480163816e-05,
+        "ig": 0.0,
+        "is": -3.31214712703e-05,
+        "ib": -6.27285951668e-15
+      },
+      {
+        "vg": 1.5,
+        "id": 3.40010202055e-05,
+        "ig": 0.0,
+        "is": -3.50306667971e-05,
+        "ib": -6.27285841521e-15
+      },
+      {
+        "vg": 1.55,
+        "id": 3.58163994679e-05,
+        "ig": 0.0,
+        "is": -3.69011072266e-05,
+        "ib": -6.27285730425e-15
+      },
+      {
+        "vg": 1.6,
+        "id": 3.75950514314e-05,
+        "ig": 0.0,
+        "is": -3.87337167313e-05,
+        "ib": -6.27285618401e-15
+      },
+      {
+        "vg": 1.65,
+        "id": 3.93378483944e-05,
+        "ig": 0.0,
+        "is": -4.05293937565e-05,
+        "ib": -6.27285505473e-15
+      },
+      {
+        "vg": 1.7,
+        "id": 4.10456410605e-05,
+        "ig": 0.0,
+        "is": -4.2289014528e-05,
+        "ib": -6.27285391661e-15
+      },
+      {
+        "vg": 1.75,
+        "id": 4.27192597638e-05,
+        "ig": 0.0,
+        "is": -4.40134342892e-05,
+        "ib": -6.27285276987e-15
+      },
+      {
+        "vg": 1.8,
+        "id": 4.43595147767e-05,
+        "ig": 0.0,
+        "is": -4.57034875946e-05,
+        "ib": -6.27285161471e-15
+      },
+      {
+        "vg": 1.85,
+        "id": 4.59671962347e-05,
+        "ig": 0.0,
+        "is": -4.73599882947e-05,
+        "ib": -6.27285045133e-15
+      },
+      {
+        "vg": 1.9,
+        "id": 4.75430741577e-05,
+        "ig": 0.0,
+        "is": -4.89837294889e-05,
+        "ib": -6.27284927992e-15
+      },
+      {
+        "vg": 1.95,
+        "id": 4.90878984085e-05,
+        "ig": 0.0,
+        "is": -5.05754835567e-05,
+        "ib": -6.27284810067e-15
+      },
+      {
+        "vg": 2.0,
+        "id": 5.06023989022e-05,
+        "ig": 0.0,
+        "is": -5.2136002295e-05,
+        "ib": -6.27284691377e-15
+      },
+      {
+        "vg": 2.05,
+        "id": 5.20872857761e-05,
+        "ig": 0.0,
+        "is": -5.36660171563e-05,
+        "ib": -6.2728457194e-15
+      },
+      {
+        "vg": 2.1,
+        "id": 5.35432497493e-05,
+        "ig": 0.0,
+        "is": -5.51662395711e-05,
+        "ib": -6.27284451773e-15
+      },
+      {
+        "vg": 2.15,
+        "id": 5.49709624704e-05,
+        "ig": 0.0,
+        "is": -5.66373613361e-05,
+        "ib": -6.27284330892e-15
+      },
+      {
+        "vg": 2.2,
+        "id": 5.63710769278e-05,
+        "ig": 0.0,
+        "is": -5.80800550497e-05,
+        "ib": -6.27284209316e-15
+      },
+      {
+        "vg": 2.25,
+        "id": 5.77442279581e-05,
+        "ig": 0.0,
+        "is": -5.94949745809e-05,
+        "ib": -6.27284087058e-15
+      },
+      {
+        "vg": 2.3,
+        "id": 5.909103267e-05,
+        "ig": 0.0,
+        "is": -6.08827555598e-05,
+        "ib": -6.27283964136e-15
+      },
+      {
+        "vg": 2.35,
+        "id": 6.04120909561e-05,
+        "ig": 0.0,
+        "is": -6.22440158797e-05,
+        "ib": -6.27283840564e-15
+      },
+      {
+        "vg": 2.4,
+        "id": 6.17079859781e-05,
+        "ig": 0.0,
+        "is": -6.35793562052e-05,
+        "ib": -6.27283716357e-15
+      },
+      {
+        "vg": 2.45,
+        "id": 6.29792846722e-05,
+        "ig": 0.0,
+        "is": -6.48893604796e-05,
+        "ib": -6.2728359153e-15
+      },
+      {
+        "vg": 2.5,
+        "id": 6.422653822e-05,
+        "ig": 0.0,
+        "is": -6.61745964289e-05,
+        "ib": -6.27283466095e-15
+      }
+    ]
+  },
+  {
+    "index": 1,
+    "vars": {
+      "vb": -0.5,
+      "vs": 0.0,
+      "vd": 0.025
+    },
+    "columns": [
+      "vg",
+      "id",
+      "ig",
+      "is",
+      "ib"
+    ],
+    "data": [
+      {
+        "vg": 0.0,
+        "id": 1.02397085161e-14,
+        "ig": 0.0,
+        "is": 9.8826916141e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.05,
+        "id": 1.02396828372e-14,
+        "ig": 0.0,
+        "is": 9.85638902274e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.1,
+        "id": 1.02396571583e-14,
+        "ig": 0.0,
+        "is": 9.50639112847e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.15,
+        "id": 1.36528419725e-14,
+        "ig": 0.0,
+        "is": 7.98965203421e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.2,
+        "id": 1.70660096675e-14,
+        "ig": 0.0,
+        "is": 6.18550514179e-16,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.25,
+        "id": 5.11979006078e-14,
+        "ig": 0.0,
+        "is": -3.52006990501e-14,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.3,
+        "id": 2.1844382811e-13,
+        "ig": 0.0,
+        "is": -2.09228049661e-13,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.35,
+        "id": 1.04101875765e-12,
+        "ig": 0.0,
+        "is": -1.05438124884e-12,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.4,
+        "id": 5.02076967926e-12,
+        "ig": 0.0,
+        "is": -5.15500980132e-12,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.45,
+        "id": 2.4291453566e-11,
+        "ig": 0.0,
+        "is": -2.50105016819e-11,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.5,
+        "id": 1.17187111865e-10,
+        "ig": 0.0,
+        "is": -1.20724926629e-10,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.55,
+        "id": 5.60693904683e-10,
+        "ig": 0.0,
+        "is": -5.77700507344e-10,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.6,
+        "id": 2.63550902162e-09,
+        "ig": 0.0,
+        "is": -2.71551015255e-09,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.65,
+        "id": 1.19515039453e-08,
+        "ig": 0.0,
+        "is": -1.23143898148e-08,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.7,
+        "id": 5.07350493967e-08,
+        "ig": 0.0,
+        "is": -5.22757140143e-08,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.75,
+        "id": 1.936081018e-07,
+        "ig": 0.0,
+        "is": -1.9948789633e-07,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.8,
+        "id": 6.30572493557e-07,
+        "ig": 0.0,
+        "is": -6.4972425666e-07,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.85,
+        "id": 1.63578873097e-06,
+        "ig": 0.0,
+        "is": -1.68547491573e-06,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.9,
+        "id": 3.28345401864e-06,
+        "ig": 0.0,
+        "is": -3.38319507001e-06,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.95,
+        "id": 5.34894719767e-06,
+        "ig": 0.0,
+        "is": -5.51144437325e-06,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.0,
+        "id": 7.57406815463e-06,
+        "ig": 0.0,
+        "is": -7.80418118499e-06,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.05,
+        "id": 9.81528190455e-06,
+        "ig": 0.0,
+        "is": -1.01135104932e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.1,
+        "id": 1.20191521711e-05,
+        "ig": 0.0,
+        "is": -1.23843723851e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.15,
+        "id": 1.41727423111e-05,
+        "ig": 0.0,
+        "is": -1.46034368263e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.2,
+        "id": 1.62763568413e-05,
+        "ig": 0.0,
+        "is": -1.67710172263e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.25,
+        "id": 1.83331373195e-05,
+        "ig": 0.0,
+        "is": -1.88903502566e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.3,
+        "id": 2.03460234228e-05,
+        "ig": 0.0,
+        "is": -2.09644645963e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.35,
+        "id": 2.23172255523e-05,
+        "ig": 0.0,
+        "is": -2.2995637563e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.4,
+        "id": 2.42483616863e-05,
+        "ig": 0.0,
+        "is": -2.4985535989e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.45,
+        "id": 2.61406764914e-05,
+        "ig": 0.0,
+        "is": -2.69354421027e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.5,
+        "id": 2.79952040853e-05,
+        "ig": 0.0,
+        "is": -2.8846421177e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.55,
+        "id": 2.98128659368e-05,
+        "ig": 0.0,
+        "is": -3.07194224438e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.6,
+        "id": 3.15945236149e-05,
+        "ig": 0.0,
+        "is": -3.25553333904e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.65,
+        "id": 3.33410047384e-05,
+        "ig": 0.0,
+        "is": -3.43550065545e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.7,
+        "id": 3.50531147196e-05,
+        "ig": 0.0,
+        "is": -3.6119271586e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.75,
+        "id": 3.6731641342e-05,
+        "ig": 0.0,
+        "is": -3.78489399857e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.8,
+        "id": 3.83773561083e-05,
+        "ig": 0.0,
+        "is": -3.95448064854e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.85,
+        "id": 3.99910142577e-05,
+        "ig": 0.0,
+        "is": -4.12076490585e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.9,
+        "id": 4.15733543497e-05,
+        "ig": 0.0,
+        "is": -4.28382284998e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.95,
+        "id": 4.31250978241e-05,
+        "ig": 0.0,
+        "is": -4.44372879779e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.0,
+        "id": 4.46469487012e-05,
+        "ig": 0.0,
+        "is": -4.60055527147e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.05,
+        "id": 4.61395934139e-05,
+        "ig": 0.0,
+        "is": -4.75437298267e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.1,
+        "id": 4.76037008398e-05,
+        "ig": 0.0,
+        "is": -4.90525083184e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.15,
+        "id": 4.90399223583e-05,
+        "ig": 0.0,
+        "is": -5.05325592027e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.2,
+        "id": 5.04488921215e-05,
+        "ig": 0.0,
+        "is": -5.19845357207e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.25,
+        "id": 5.18312272786e-05,
+        "ig": 0.0,
+        "is": -5.34090736351e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.3,
+        "id": 5.31875283867e-05,
+        "ig": 0.0,
+        "is": -5.48067915776e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.35,
+        "id": 5.45183797378e-05,
+        "ig": 0.0,
+        "is": -5.61782914338e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.4,
+        "id": 5.58243497452e-05,
+        "ig": 0.0,
+        "is": -5.75241587538e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.45,
+        "id": 5.71059913903e-05,
+        "ig": 0.0,
+        "is": -5.88449631774e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.5,
+        "id": 5.83638426363e-05,
+        "ig": 0.0,
+        "is": -6.01412588683e-05,
+        "ib": 0.0
+      }
+    ]
+  },
+  {
+    "index": 2,
+    "vars": {
+      "vb": -1.0,
+      "vs": 0.0,
+      "vd": 0.025
+    },
+    "columns": [
+      "vg",
+      "id",
+      "ig",
+      "is",
+      "ib"
+    ],
+    "data": [
+      {
+        "vg": 0.0,
+        "id": 1.02383988916e-14,
+        "ig": 0.0,
+        "is": 9.89938931113e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.05,
+        "id": 1.02383732126e-14,
+        "ig": 0.0,
+        "is": 9.89882262684e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.1,
+        "id": 1.02383475337e-14,
+        "ig": 0.0,
+        "is": 9.890773664e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.15,
+        "id": 1.02383218548e-14,
+        "ig": 0.0,
+        "is": 9.85425596314e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.2,
+        "id": 1.02382961759e-14,
+        "ig": 0.0,
+        "is": 9.66892322814e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.25,
+        "id": 1.36510273293e-14,
+        "ig": 0.0,
+        "is": 8.72831896153e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.3,
+        "id": 1.36509930908e-14,
+        "ig": 0.0,
+        "is": 3.95468141225e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.35,
+        "id": 4.09528765566e-14,
+        "ig": 0.0,
+        "is": -2.02700554397e-14,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.4,
+        "id": 1.56985633057e-13,
+        "ig": 0.0,
+        "is": -1.43181877484e-13,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.45,
+        "id": 7.64449861006e-13,
+        "ig": 0.0,
+        "is": -7.66570848853e-13,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.5,
+        "id": 3.82565243227e-12,
+        "ig": 0.0,
+        "is": -3.92553076271e-12,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.55,
+        "id": 1.93295638076e-11,
+        "ig": 0.0,
+        "is": -1.99017889128e-11,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.6,
+        "id": 9.73949572533e-11,
+        "ig": 0.0,
+        "is": -1.00346497194e-10,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.65,
+        "id": 4.86666422897e-10,
+        "ig": 0.0,
+        "is": -5.01487813483e-10,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.7,
+        "id": 2.3873742778e-09,
+        "ig": 0.0,
+        "is": -2.46014987021e-09,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.75,
+        "id": 1.12735000649e-08,
+        "ig": 0.0,
+        "is": -1.1617243993e-08,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.8,
+        "id": 4.95549744084e-08,
+        "ig": 0.0,
+        "is": -5.10661344636e-08,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.85,
+        "id": 1.93719645373e-07,
+        "ig": 0.0,
+        "is": -1.99627592275e-07,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.9,
+        "id": 6.36266755864e-07,
+        "ig": 0.0,
+        "is": -6.55672811582e-07,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.95,
+        "id": 1.63932927395e-06,
+        "ig": 0.0,
+        "is": -1.68933259069e-06,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.0,
+        "id": 3.24889397207e-06,
+        "ig": 0.0,
+        "is": -3.34800058155e-06,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.05,
+        "id": 5.23544594898e-06,
+        "ig": 0.0,
+        "is": -5.39516441187e-06,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.1,
+        "id": 7.35969950152e-06,
+        "ig": 0.0,
+        "is": -7.5842406291e-06,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.15,
+        "id": 9.49520881908e-06,
+        "ig": 0.0,
+        "is": -9.78492628863e-06,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.2,
+        "id": 1.15964121148e-05,
+        "ig": 0.0,
+        "is": -1.19502694081e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.25,
+        "id": 1.36524481953e-05,
+        "ig": 0.0,
+        "is": -1.40690770934e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.3,
+        "id": 1.56634438194e-05,
+        "ig": 0.0,
+        "is": -1.61414796428e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.35,
+        "id": 1.76318281295e-05,
+        "ig": 0.0,
+        "is": -1.81699800088e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.4,
+        "id": 1.95598835511e-05,
+        "ig": 0.0,
+        "is": -2.0156929994e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.45,
+        "id": 2.14493427183e-05,
+        "ig": 0.0,
+        "is": -2.21041148239e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.5,
+        "id": 2.33015027729e-05,
+        "ig": 0.0,
+        "is": -2.40128709636e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.55,
+        "id": 2.51173950008e-05,
+        "ig": 0.0,
+        "is": -2.58842608991e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.6,
+        "id": 2.68979059485e-05,
+        "ig": 0.0,
+        "is": -2.77191979983e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.65,
+        "id": 2.86438475972e-05,
+        "ig": 0.0,
+        "is": -2.95185187827e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.7,
+        "id": 3.03559933109e-05,
+        "ig": 0.0,
+        "is": -3.1283019983e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.75,
+        "id": 3.20350944078e-05,
+        "ig": 0.0,
+        "is": -3.30134756185e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.8,
+        "id": 3.36818868047e-05,
+        "ig": 0.0,
+        "is": -3.47106438396e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.85,
+        "id": 3.52970929865e-05,
+        "ig": 0.0,
+        "is": -3.6375268973e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.9,
+        "id": 3.68814220777e-05,
+        "ig": 0.0,
+        "is": -3.80080815623e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.95,
+        "id": 3.84355691809e-05,
+        "ig": 0.0,
+        "is": -3.96097977367e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.0,
+        "id": 3.99602147282e-05,
+        "ig": 0.0,
+        "is": -4.11811184915e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.05,
+        "id": 4.14560238742e-05,
+        "ig": 0.0,
+        "is": -4.27227291042e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.1,
+        "id": 4.29236461584e-05,
+        "ig": 0.0,
+        "is": -4.42352987463e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.15,
+        "id": 4.43637153074e-05,
+        "ig": 0.0,
+        "is": -4.57194802841e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.2,
+        "id": 4.57768491155e-05,
+        "ig": 0.0,
+        "is": -4.71759102391e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.25,
+        "id": 4.71636496671e-05,
+        "ig": 0.0,
+        "is": -4.86052088731e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.3,
+        "id": 4.85247034013e-05,
+        "ig": 0.0,
+        "is": -5.00079803697e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.35,
+        "id": 4.98605813958e-05,
+        "ig": 0.0,
+        "is": -5.13848130857e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.4,
+        "id": 5.11718396907e-05,
+        "ig": 0.0,
+        "is": -5.27362798528e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.45,
+        "id": 5.24590195416e-05,
+        "ig": 0.0,
+        "is": -5.40629383147e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.5,
+        "id": 5.37226478259e-05,
+        "ig": 0.0,
+        "is": -5.53653312889e-05,
+        "ib": 0.0
+      }
+    ]
+  },
+  {
+    "index": 3,
+    "vars": {
+      "vb": -1.5,
+      "vs": 0.0,
+      "vd": 0.025
+    },
+    "columns": [
+      "vg",
+      "id",
+      "ig",
+      "is",
+      "ib"
+    ],
+    "data": [
+      {
+        "vg": 0.0,
+        "id": 1.0237089267e-14,
+        "ig": 0.0,
+        "is": 9.90013543279e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.05,
+        "id": 1.02370635881e-14,
+        "ig": 0.0,
+        "is": 9.90011336173e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.1,
+        "id": 1.02370379091e-14,
+        "ig": 0.0,
+        "is": 9.89980694588e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.15,
+        "id": 1.02370122302e-14,
+        "ig": 0.0,
+        "is": 9.89837776823e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.2,
+        "id": 1.02369865513e-14,
+        "ig": 0.0,
+        "is": 9.89091100733e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.25,
+        "id": 1.02369608724e-14,
+        "ig": 0.0,
+        "is": 9.85187138773e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.3,
+        "id": 1.02369351935e-14,
+        "ig": 0.0,
+        "is": 9.64772646594e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.35,
+        "id": 1.02369095146e-14,
+        "ig": 0.0,
+        "is": 8.58020595178e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.4,
+        "id": 1.70614730594e-14,
+        "ig": 0.0,
+        "is": 2.99808437585e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.45,
+        "id": 3.75351465748e-14,
+        "ig": 0.0,
+        "is": -2.61885609463e-14,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.5,
+        "id": 1.91087539586e-13,
+        "ig": 0.0,
+        "is": -1.78762686023e-13,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.55,
+        "id": 9.65672108032e-13,
+        "ig": 0.0,
+        "is": -9.75978543885e-13,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.6,
+        "id": 5.00237370731e-12,
+        "ig": 0.0,
+        "is": -5.13710215426e-12,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.65,
+        "id": 2.60252445831e-11,
+        "ig": 0.0,
+        "is": -2.68040132992e-11,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.7,
+        "id": 1.34899624806e-10,
+        "ig": 0.0,
+        "is": -1.39008204962e-10,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.75,
+        "id": 6.91840820999e-10,
+        "ig": 0.0,
+        "is": -7.13004091243e-10,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.8,
+        "id": 3.46607106319e-09,
+        "ig": 0.0,
+        "is": -3.57217563809e-09,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.85,
+        "id": 1.65486683381e-08,
+        "ig": 0.0,
+        "is": -1.70553762119e-08,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.9,
+        "id": 7.23185387218e-08,
+        "ig": 0.0,
+        "is": -7.45331333184e-08,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.95,
+        "id": 2.74558816361e-07,
+        "ig": 0.0,
+        "is": -2.82967261688e-07,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.0,
+        "id": 8.49220692431e-07,
+        "ig": 0.0,
+        "is": -8.7523042923e-07,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.05,
+        "id": 2.01481070954e-06,
+        "ig": 0.0,
+        "is": -2.07652475313e-06,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.1,
+        "id": 3.70900939784e-06,
+        "ig": 0.0,
+        "is": -3.82262604353e-06,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.15,
+        "id": 5.6796662388e-06,
+        "ig": 0.0,
+        "is": -5.85366295599e-06,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.2,
+        "id": 7.73144488764e-06,
+        "ig": 0.0,
+        "is": -7.96831656497e-06,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.25,
+        "id": 9.77536724776e-06,
+        "ig": 0.0,
+        "is": -1.00748830705e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.3,
+        "id": 1.17827966134e-05,
+        "ig": 0.0,
+        "is": -1.21438482193e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.35,
+        "id": 1.37481274061e-05,
+        "ig": 0.0,
+        "is": -1.41694343872e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.4,
+        "id": 1.56723321657e-05,
+        "ig": 0.0,
+        "is": -1.61526436173e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.45,
+        "id": 1.75574746952e-05,
+        "ig": 0.0,
+        "is": -1.80956026614e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.5,
+        "id": 1.94053295632e-05,
+        "ig": 0.0,
+        "is": -2.0000140213e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.55,
+        "id": 2.12172395574e-05,
+        "ig": 0.0,
+        "is": -2.1867639934e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.6,
+        "id": 2.29942432843e-05,
+        "ig": 0.0,
+        "is": -2.36991720186e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.65,
+        "id": 2.47372051808e-05,
+        "ig": 0.0,
+        "is": -2.54956271613e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.7,
+        "id": 2.64468994669e-05,
+        "ig": 0.0,
+        "is": -2.72578030664e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.75,
+        "id": 2.81240554688e-05,
+        "ig": 0.0,
+        "is": -2.89864511981e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.8,
+        "id": 2.97693793038e-05,
+        "ig": 0.0,
+        "is": -3.06822990748e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.85,
+        "id": 3.13835627886e-05,
+        "ig": 0.0,
+        "is": -3.23460595073e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.9,
+        "id": 3.29672863406e-05,
+        "ig": 0.0,
+        "is": -3.39784335504e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.95,
+        "id": 3.45212191923e-05,
+        "ig": 0.0,
+        "is": -3.55801107501e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.0,
+        "id": 3.60460187128e-05,
+        "ig": 0.0,
+        "is": -3.71517684288e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.05,
+        "id": 3.75423295514e-05,
+        "ig": 0.0,
+        "is": -3.86940707877e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.1,
+        "id": 3.90107828328e-05,
+        "ig": 0.0,
+        "is": -4.02076681303e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.15,
+        "id": 4.04519956927e-05,
+        "ig": 0.0,
+        "is": -4.16931963003e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.2,
+        "id": 4.18665708382e-05,
+        "ig": 0.0,
+        "is": -4.31512763328e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.25,
+        "id": 4.32550965004e-05,
+        "ig": 0.0,
+        "is": -4.45825142887e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.3,
+        "id": 4.46181463215e-05,
+        "ig": 0.0,
+        "is": -4.59875012354e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.35,
+        "id": 4.59562794712e-05,
+        "ig": 0.0,
+        "is": -4.73668133395e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.4,
+        "id": 4.72700408622e-05,
+        "ig": 0.0,
+        "is": -4.87210120417e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.45,
+        "id": 4.85599613372e-05,
+        "ig": 0.0,
+        "is": -5.00506442927e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.5,
+        "id": 4.98265579056e-05,
+        "ig": 0.0,
+        "is": -5.13562428327e-05,
+        "ib": 0.0
+      }
+    ]
+  },
+  {
+    "index": 4,
+    "vars": {
+      "vb": -2.0,
+      "vs": 0.0,
+      "vd": 0.025
+    },
+    "columns": [
+      "vg",
+      "id",
+      "ig",
+      "is",
+      "ib"
+    ],
+    "data": [
+      {
+        "vg": 0.0,
+        "id": 1.02357796424e-14,
+        "ig": 0.0,
+        "is": 9.90055775986e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.05,
+        "id": 1.02357539635e-14,
+        "ig": 0.0,
+        "is": 9.90055504777e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.1,
+        "id": 1.02357282846e-14,
+        "ig": 0.0,
+        "is": 9.9005370268e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.15,
+        "id": 1.02357026057e-14,
+        "ig": 0.0,
+        "is": 9.90045686858e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.2,
+        "id": 1.02356769267e-14,
+        "ig": 0.0,
+        "is": 9.90003542074e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.25,
+        "id": 1.02356512478e-14,
+        "ig": 0.0,
+        "is": 9.89778897457e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.3,
+        "id": 1.02356255689e-14,
+        "ig": 0.0,
+        "is": 9.8857836271e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.35,
+        "id": 1.023559989e-14,
+        "ig": 0.0,
+        "is": 9.82159429384e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.4,
+        "id": 1.36474322815e-14,
+        "ig": 0.0,
+        "is": 9.47836356555e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.45,
+        "id": 1.36473980429e-14,
+        "ig": 0.0,
+        "is": 7.64306485619e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.5,
+        "id": 2.04710457065e-14,
+        "ig": 0.0,
+        "is": -2.17001655151e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.55,
+        "id": 6.8236647829e-14,
+        "ig": 0.0,
+        "is": -5.46326814804e-14,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.6,
+        "id": 3.44594207013e-13,
+        "ig": 0.0,
+        "is": -3.35027919571e-13,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.65,
+        "id": 1.79120301789e-12,
+        "ig": 0.0,
+        "is": -1.83265219627e-12,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.7,
+        "id": 9.53941156825e-12,
+        "ig": 0.0,
+        "is": -9.8194135943e-12,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.75,
+        "id": 5.0719791341e-11,
+        "ig": 0.0,
+        "is": -5.2262921971e-11,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.8,
+        "id": 2.67805012333e-10,
+        "ig": 0.0,
+        "is": -2.76015529476e-10,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.85,
+        "id": 1.39180195486e-09,
+        "ig": 0.0,
+        "is": -1.43457098098e-09,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.9,
+        "id": 6.99041473967e-09,
+        "ig": 0.0,
+        "is": -7.20531890976e-09,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.95,
+        "id": 3.28068974476e-08,
+        "ig": 0.0,
+        "is": -3.38156360894e-08,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.0,
+        "id": 1.36907884401e-07,
+        "ig": 0.0,
+        "is": -1.41117904737e-07,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.05,
+        "id": 4.78533178292e-07,
+        "ig": 0.0,
+        "is": -4.93249631967e-07,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.1,
+        "id": 1.30776850044e-06,
+        "ig": 0.0,
+        "is": -1.34798982823e-06,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.15,
+        "id": 2.71683605053e-06,
+        "ig": 0.0,
+        "is": -2.80040081495e-06,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.2,
+        "id": 4.51697398482e-06,
+        "ig": 0.0,
+        "is": -4.65591851443e-06,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.25,
+        "id": 6.47430338327e-06,
+        "ig": 0.0,
+        "is": -6.67347204202e-06,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.3,
+        "id": 8.45691585976e-06,
+        "ig": 0.0,
+        "is": -8.71709595005e-06,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.35,
+        "id": 1.0414877281e-05,
+        "ig": 0.0,
+        "is": -1.07353199114e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.4,
+        "id": 1.23348350121e-05,
+        "ig": 0.0,
+        "is": -1.27143802593e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.45,
+        "id": 1.42154740414e-05,
+        "ig": 0.0,
+        "is": -1.46529212262e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.5,
+        "id": 1.60583362347e-05,
+        "ig": 0.0,
+        "is": -1.65525318594e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.55,
+        "id": 1.78651365396e-05,
+        "ig": 0.0,
+        "is": -1.84149796064e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.6,
+        "id": 1.96372343649e-05,
+        "ig": 0.0,
+        "is": -2.02416654693e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.65,
+        "id": 2.13756719359e-05,
+        "ig": 0.0,
+        "is": -2.2033663481e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.7,
+        "id": 2.3081296062e-05,
+        "ig": 0.0,
+        "is": -2.37918463055e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.75,
+        "id": 2.47548499983e-05,
+        "ig": 0.0,
+        "is": -2.55169798166e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.8,
+        "id": 2.63970260465e-05,
+        "ig": 0.0,
+        "is": -2.72097774175e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.85,
+        "id": 2.80084916547e-05,
+        "ig": 0.0,
+        "is": -2.88709268724e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.9,
+        "id": 2.95899005224e-05,
+        "ig": 0.0,
+        "is": -3.05011017794e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.95,
+        "id": 3.1141896319e-05,
+        "ig": 0.0,
+        "is": -3.21009654435e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.0,
+        "id": 3.26651132919e-05,
+        "ig": 0.0,
+        "is": -3.36711713987e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.05,
+        "id": 3.41601754471e-05,
+        "ig": 0.0,
+        "is": -3.52123626862e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.1,
+        "id": 3.56276956628e-05,
+        "ig": 0.0,
+        "is": -3.67251708469e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.15,
+        "id": 3.70682747544e-05,
+        "ig": 0.0,
+        "is": -3.82102150116e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.2,
+        "id": 3.8482500827e-05,
+        "ig": 0.0,
+        "is": -3.96681012114e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.25,
+        "id": 3.98709488347e-05,
+        "ig": 0.0,
+        "is": -4.10994219173e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.3,
+        "id": 4.12341803053e-05,
+        "ig": 0.0,
+        "is": -4.25047557806e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.35,
+        "id": 4.25727432749e-05,
+        "ig": 0.0,
+        "is": -4.38846675336e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.4,
+        "id": 4.38871722748e-05,
+        "ig": 0.0,
+        "is": -4.5239708013e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.45,
+        "id": 4.51779884783e-05,
+        "ig": 0.0,
+        "is": -4.65704142767e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.5,
+        "id": 4.64456998648e-05,
+        "ig": 0.0,
+        "is": -4.78773097875e-05,
+        "ib": 0.0
+      }
+    ]
+  },
+  {
+    "index": 5,
+    "vars": {
+      "vb": -2.5,
+      "vs": 0.0,
+      "vd": 0.025
+    },
+    "columns": [
+      "vg",
+      "id",
+      "ig",
+      "is",
+      "ib"
+    ],
+    "data": [
+      {
+        "vg": 0.0,
+        "id": 1.02344700178e-14,
+        "ig": 0.0,
+        "is": 9.9009689568e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.05,
+        "id": 1.02344443389e-14,
+        "ig": 0.0,
+        "is": 9.90096723154e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.1,
+        "id": 1.023441866e-14,
+        "ig": 0.0,
+        "is": 9.90096443554e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.15,
+        "id": 1.02343929811e-14,
+        "ig": 0.0,
+        "is": 9.9009571989e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.2,
+        "id": 1.02343673022e-14,
+        "ig": 0.0,
+        "is": 9.90092516258e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.25,
+        "id": 1.02343416233e-14,
+        "ig": 0.0,
+        "is": 9.90075817212e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.3,
+        "id": 1.02343159443e-14,
+        "ig": 0.0,
+        "is": 9.89985679272e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.35,
+        "id": 1.02342902654e-14,
+        "ig": 0.0,
+        "is": 9.894959046e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.4,
+        "id": 1.02342645865e-14,
+        "ig": 0.0,
+        "is": 9.86831410371e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.45,
+        "id": 1.02342389076e-14,
+        "ig": 0.0,
+        "is": 9.72332746036e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.5,
+        "id": 1.36456176382e-14,
+        "ig": 0.0,
+        "is": 8.93437231044e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.55,
+        "id": 1.70569792496e-14,
+        "ig": 0.0,
+        "is": 4.64134189167e-15,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.6,
+        "id": 3.41138729029e-14,
+        "ig": 0.0,
+        "is": -1.87168367441e-14,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.65,
+        "id": 1.5692342161e-13,
+        "ig": 0.0,
+        "is": -1.45782215909e-13,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.7,
+        "id": 8.32374321726e-13,
+        "ig": 0.0,
+        "is": -8.36678806654e-13,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.75,
+        "id": 4.4688837109e-12,
+        "ig": 0.0,
+        "is": -4.58923663593e-12,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.8,
+        "id": 2.41899044899e-11,
+        "ig": 0.0,
+        "is": -2.49196612564e-11,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.85,
+        "id": 1.30419111277e-10,
+        "ig": 0.0,
+        "is": -1.34424906063e-10,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.9,
+        "id": 6.95025582879e-10,
+        "ig": 0.0,
+        "is": -7.16461086487e-10,
+        "ib": 0.0
+      },
+      {
+        "vg": 0.95,
+        "id": 3.60881934842e-09,
+        "ig": 0.0,
+        "is": -3.72021053258e-09,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.0,
+        "id": 1.77497842827e-08,
+        "ig": 0.0,
+        "is": -1.82977725987e-08,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.05,
+        "id": 7.89745818857e-08,
+        "ig": 0.0,
+        "is": -8.1413012964e-08,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.1,
+        "id": 2.99771704574e-07,
+        "ig": 0.0,
+        "is": -3.09028286222e-07,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.15,
+        "id": 9.06963299458e-07,
+        "ig": 0.0,
+        "is": -9.34971440768e-07,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.2,
+        "id": 2.07952337491e-06,
+        "ig": 0.0,
+        "is": -2.14374666136e-06,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.25,
+        "id": 3.71585082178e-06,
+        "ig": 0.0,
+        "is": -3.8306188703e-06,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.3,
+        "id": 5.57662808845e-06,
+        "ig": 0.0,
+        "is": -5.748881714e-06,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.35,
+        "id": 7.4965084908e-06,
+        "ig": 0.0,
+        "is": -7.72808242509e-06,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.4,
+        "id": 9.40485603413e-06,
+        "ig": 0.0,
+        "is": -9.69540327031e-06,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.45,
+        "id": 1.12799565354e-05,
+        "ig": 0.0,
+        "is": -1.16284590932e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.5,
+        "id": 1.31177915665e-05,
+        "ig": 0.0,
+        "is": -1.35231070665e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.55,
+        "id": 1.49191806886e-05,
+        "ig": 0.0,
+        "is": -1.53801918074e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.6,
+        "id": 1.66856920424e-05,
+        "ig": 0.0,
+        "is": -1.72013296507e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.65,
+        "id": 1.84186670442e-05,
+        "ig": 0.0,
+        "is": -1.89879032245e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.7,
+        "id": 2.0119140355e-05,
+        "ig": 0.0,
+        "is": -2.07409789195e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.75,
+        "id": 2.1787940279e-05,
+        "ig": 0.0,
+        "is": -2.24614104084e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.8,
+        "id": 2.34257822976e-05,
+        "ig": 0.0,
+        "is": -2.41499350522e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.85,
+        "id": 2.50333263511e-05,
+        "ig": 0.0,
+        "is": -2.5807232985e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.9,
+        "id": 2.66112061308e-05,
+        "ig": 0.0,
+        "is": -2.74339572685e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 1.95,
+        "id": 2.81600418959e-05,
+        "ig": 0.0,
+        "is": -2.90307471147e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.0,
+        "id": 2.96804449479e-05,
+        "ig": 0.0,
+        "is": -3.05982325222e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.05,
+        "id": 3.11730184028e-05,
+        "ig": 0.0,
+        "is": -3.21370350522e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.1,
+        "id": 3.2638356508e-05,
+        "ig": 0.0,
+        "is": -3.36477671329e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.15,
+        "id": 3.40770436061e-05,
+        "ig": 0.0,
+        "is": -3.51310309888e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.2,
+        "id": 3.54896531968e-05,
+        "ig": 0.0,
+        "is": -3.65874176433e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.25,
+        "id": 3.68767471112e-05,
+        "ig": 0.0,
+        "is": -3.80175061419e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.3,
+        "id": 3.8238875069e-05,
+        "ig": 0.0,
+        "is": -3.94218630143e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.35,
+        "id": 3.95765743202e-05,
+        "ig": 0.0,
+        "is": -4.08010419471e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.4,
+        "id": 4.08903694782e-05,
+        "ig": 0.0,
+        "is": -4.21555836264e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.45,
+        "id": 4.21807725438e-05,
+        "ig": 0.0,
+        "is": -4.34860157104e-05,
+        "ib": 0.0
+      },
+      {
+        "vg": 2.5,
+        "id": 4.34482829293e-05,
+        "ig": 0.0,
+        "is": -4.47928529016e-05,
+        "ib": 0.0
+      }
+    ]
+  }
+];
+        const inputs = ["vb         V  B GROUND SMU4 0.1 LIN        2    0          -2.5       6    -0.5", "vs         V  S GROUND SMU3 0.1 CON        0", "vg         V  G GROUND SMU2 0.1 LIN        1    0          2.5        51   0.05", "vd         V  D GROUND SMU1 0.1 CON        0.025"];
+        const outputs = ["id         I  D GROUND SMU1 B", "ig         I  G GROUND GND B", "is         I  S GROUND SMU3 B", "ib         I  B GROUND GND B"];
+        const values = {"DataOrigin": "Simulation", "___CONTEXT": "", "Date": "Jul 5 Tue 09:33:13 2016", "Version": "WaferPro.2016.04", "Bench": "WX-ABench", "Temperature": "27", "Lot": "MyLotA_02", "Wafer": "Wafer_1", "Die": "X-1-Y-1", "DieList": "WX_TargetDies_1", "Block": "WholeDie", "Subsite": "Subsite_1", "Routine": "WPro_MOSFET_DC", "MeasCond": "WX_DC_MeasGroup1", "Device": "1", "DeviceName": "Device_1", "DevTechno": "MOSFET", "DevPolarity": "N", "Setup": "IdVg_Vlin", "Type": "1", "___SPICE_INSTANCE": "", "W": "100.000u", "L": "10.0000u", "Nf": " 1.000 ", "___TECHNO_INSTANCE": "", "___CALIBRATION": ""};
+        const columns = ["vg", "id", "ig", "is", "ib"];
+        const mdmFilename = 'dc_mosfet_measurements';
+        
+        // Color palette for plots
+        const colors = [
+            '#1a73e8', '#34a853', '#ea4335', '#ea8600', 
+            '#9334e6', '#e91e63', '#00acc1', '#43a047'
+        ];
+        
+        // Initialize the page
+        document.addEventListener('DOMContentLoaded', function() {
+            populateInputsTable();
+            populateOutputsTable();
+            populateMetadata();
+            setupControls();
+            updatePlot();
+            updateDataTable('all');
+        });
+        
+        function parseInputLine(line) {
+            const parts = line.trim().split(/\s+/);
+            const name = parts[0] || '';
+            const unit = parts[1] || '';
+            
+            // For frequency inputs (Unit = F): name unit sweepType sweepOrder start stop points step
+            // For voltage/current inputs: name unit terminal ground source compliance sweepType params...
+            if (unit === 'F') {
+                // Frequency input format
+                return {
+                    name: name,
+                    unit: unit,
+                    terminal: '',  // No node for frequency
+                    ground: '',
+                    source: '',    // No SMU for frequency
+                    compliance: '',
+                    sweepType: parts[2] || '',
+                    param1: parts[3] || '',  // sweep order
+                    param2: parts[4] || '',  // start freq
+                    param3: parts[5] || '',  // stop freq
+                    param4: parts[6] || '',  // points
+                    param5: parts[7] || ''   // step
+                };
+            } else {
+                // Standard V/I input format
+                return {
+                    name: name,
+                    unit: unit,
+                    terminal: parts[2] || '',
+                    ground: parts[3] || '',
+                    source: parts[4] || '',
+                    compliance: parts[5] || '',
+                    sweepType: parts[6] || '',
+                    param1: parts[7] || '',
+                    param2: parts[8] || '',
+                    param3: parts[9] || '',
+                    param4: parts[10] || '',
+                    param5: parts[11] || ''
+                };
+            }
+        }
+        
+        function parseOutputLine(line) {
+            const parts = line.trim().split(/\s+/);
+            const name = parts[0] || '';
+            const unit = parts[1] || '';
+            
+            // For S-parameter outputs (Unit = S): name unit node1 node2 ground source option
+            // For standard outputs: name unit terminal ground source option
+            if (unit === 'S') {
+                return {
+                    name: name,
+                    unit: unit,
+                    terminal: `${parts[2] || ''} ${parts[3] || ''}`,  // Two nodes like "G D"
+                    ground: parts[4] || '',
+                    source: parts[5] || '',  // NWA or similar
+                    type: parts[6] || ''     // Option like "B"
+                };
+            } else {
+                return {
+                    name: name,
+                    unit: unit,
+                    terminal: parts[2] || '',
+                    ground: parts[3] || '',
+                    source: parts[4] || '',
+                    type: parts[5] || ''
+                };
+            }
+        }
+        
+        function parseInputWithOrder(line) {
+            const input = parseInputLine(line);
+            let sweepOrder = Infinity; // CON goes to end
+            let sweepLabel = '';
+            let sweepOption = '';
+            
+            if (input.sweepType === 'CON') {
+                sweepLabel = 'CON';
+                sweepOption = input.param1;
+            } else if (input.sweepType) {
+                // For LIN, LOG, etc. - param1 is the sweep order
+                sweepOrder = parseInt(input.param1) || Infinity;
+                sweepLabel = `VAR${input.param1}`;
+                sweepOption = `${input.sweepType}: ${input.param2} → ${input.param3} (${input.param4} pts, step ${input.param5})`;
+            }
+            
+            return { ...input, sweepOrder, sweepLabel, sweepOption };
+        }
+        
+        // Parse and sort inputs by sweep order
+        const parsedInputs = inputs.map(parseInputWithOrder).sort((a, b) => a.sweepOrder - b.sweepOrder);
+        
+        function populateInputsTable() {
+            const tbody = document.getElementById('inputs-table');
+            parsedInputs.forEach(input => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="var-name">${input.name}</span></td>
+                        <td><span class="var-unit">${input.unit}</span></td>
+                        <td><span class="var-node">${input.terminal}</span></td>
+                        <td><span class="var-smu">${input.source}</span></td>
+                        <td><span class="var-sweep">${input.sweepLabel}</span></td>
+                        <td><span class="var-sweep">${input.sweepOption}</span></td>
+                    </tr>
+                `;
+            });
+        }
+        
+        function populateOutputsTable() {
+            const tbody = document.getElementById('outputs-table');
+            
+            // Get node order from sorted inputs
+            const nodeOrder = parsedInputs.map(inp => inp.terminal);
+            
+            // Parse and sort outputs by node order (same as inputs)
+            const parsedOutputs = outputs.map(line => parseOutputLine(line));
+            parsedOutputs.sort((a, b) => {
+                const orderA = nodeOrder.indexOf(a.terminal);
+                const orderB = nodeOrder.indexOf(b.terminal);
+                // If node not found in inputs, put at end
+                return (orderA === -1 ? 999 : orderA) - (orderB === -1 ? 999 : orderB);
+            });
+            
+            parsedOutputs.forEach(output => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><span class="var-name">${output.name}</span></td>
+                        <td><span class="var-unit">${output.unit}</span></td>
+                        <td><span class="var-node">${output.terminal}</span></td>
+                        <td><span class="var-smu">${output.source}</span></td>
+                        <td><span class="var-sweep">${output.type || '—'}</span></td>
+                    </tr>
+                `;
+            });
+        }
+        
+        function populateMetadata() {
+            const grid = document.getElementById('metadata-grid');
+            const displayKeys = ['Date', 'Lot', 'Wafer', 'Die', 'Subsite', 'DeviceName', 
+                                 'DevTechno', 'DevPolarity', 'Setup', 'W', 'L', 'Temperature'];
+            
+            displayKeys.forEach(key => {
+                if (values[key]) {
+                    grid.innerHTML += `
+                        <div class="metadata-item">
+                            <span class="metadata-label">${key}:</span>
+                            <span class="metadata-value">${values[key]}</span>
+                        </div>
+                    `;
+                }
+            });
+        }
+        
+        
+        function setupControls() {
+            // X-axis selector
+            const xSelect = document.getElementById('x-axis-select');
+            columns.forEach(col => {
+                const option = document.createElement('option');
+                option.value = col;
+                option.textContent = col;
+                xSelect.appendChild(option);
+            });
+            xSelect.addEventListener('change', updatePlot);
+            
+            // Y-axis checkboxes (outputs)
+            const yCheckboxes = document.getElementById('y-axis-checkboxes');
+            const outputNames = outputs.map(line => parseOutputLine(line).name);
+            
+            outputNames.forEach((name, idx) => {
+                const div = document.createElement('div');
+                div.className = 'checkbox-item';
+                div.innerHTML = `
+                    <input type="checkbox" id="y-${name}" value="${name}" ${idx === 0 ? 'checked' : ''}>
+                    <label for="y-${name}">${name}</label>
+                `;
+                yCheckboxes.appendChild(div);
+            });
+            yCheckboxes.querySelectorAll('input').forEach(cb => {
+                cb.addEventListener('change', updatePlot);
+            });
+            
+            // Block selector for plot
+            const blockSelect = document.getElementById('block-select');
+            mdmData.forEach((block, idx) => {
+                const vars = Object.entries(block.vars).map(([k, v]) => `${k}=${v}`).join(', ');
+                const option = document.createElement('option');
+                option.value = idx;
+                option.textContent = vars;
+                blockSelect.appendChild(option);
+            });
+            blockSelect.addEventListener('change', updatePlot);
+            
+            // Table block selector
+            const tableBlockSelect = document.getElementById('table-block-select');
+            tableBlockSelect.innerHTML = '<option value="all">All</option>';
+            mdmData.forEach((block, idx) => {
+                const vars = Object.entries(block.vars).map(([k, v]) => `${k}=${v}`).join(', ');
+                const option = document.createElement('option');
+                option.value = idx;
+                option.textContent = vars;
+                tableBlockSelect.appendChild(option);
+            });
+            tableBlockSelect.addEventListener('change', (e) => updateDataTable(e.target.value));
+            
+            // X scale buttons
+            document.querySelectorAll('#x-scale-btns .plot-type-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('#x-scale-btns .plot-type-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    updatePlot();
+                });
+            });
+            
+            // Y scale buttons
+            document.querySelectorAll('#y-scale-btns .plot-type-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    document.querySelectorAll('#y-scale-btns .plot-type-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    updatePlot();
+                });
+            });
+            
+            // Save plot button
+            document.getElementById('save-plot-btn').addEventListener('click', savePlotAsPNG);
+            
+            // Copy table button
+            document.getElementById('copy-table-btn').addEventListener('click', () => copyTableToClipboard('table-head', 'table-body'));
+        }
+        
+        function updatePlot() {
+            const xAxis = document.getElementById('x-axis-select').value;
+            const yAxes = Array.from(document.querySelectorAll('#y-axis-checkboxes input:checked')).map(cb => cb.value);
+            const blockValue = document.getElementById('block-select').value;
+            const xScale = document.querySelector('#x-scale-btns .plot-type-btn.active').dataset.scale;
+            const yScale = document.querySelector('#y-scale-btns .plot-type-btn.active').dataset.scale;
+            
+            const traces = [];
+            let colorIdx = 0;
+            
+            const blocksToPlot = blockValue === 'all' ? mdmData : [mdmData[parseInt(blockValue)]];
+            
+            blocksToPlot.forEach((block, blockIdx) => {
+                const varLabel = Object.entries(block.vars).map(([k, v]) => `${k}=${v}`).join(', ');
+                
+                yAxes.forEach(yAxis => {
+                    let xData = block.data.map(row => row[xAxis]);
+                    let yData = block.data.map(row => row[yAxis]);
+                    
+                    // Handle negative values for log scale
+                    if (xScale === 'log') {
+                        xData = xData.map(v => Math.abs(v));
+                    }
+                    if (yScale === 'log') {
+                        yData = yData.map(v => Math.abs(v));
+                    }
+                    
+                    traces.push({
+                        x: xData,
+                        y: yData,
+                        mode: 'lines+markers',
+                        name: blockValue === 'all' ? `${yAxis} (${varLabel})` : yAxis,
+                        line: { color: colors[colorIdx % colors.length], width: 2 },
+                        marker: { size: 4 }
+                    });
+                    colorIdx++;
+                });
+            });
+            
+            // Format axis labels based on scale
+            const xAxisLabel = xScale === 'log' ? `log10(${xAxis})` : xAxis;
+            const yAxisLabel = yScale === 'log' ? yAxes.map(y => `log10(${y})`).join(', ') : yAxes.join(', ');
+            
+            // Calculate min/max for axes to ensure max values are shown
+            let allX = [];
+            let allY = [];
+            traces.forEach(trace => {
+                allX = allX.concat(trace.x);
+                allY = allY.concat(trace.y);
+            });
+            
+            // For linear scale, use actual min/max; for log scale, let Plotly auto-scale
+            let xRange, yRange;
+            if (xScale === 'linear') {
+                const xMin = Math.min(...allX);
+                const xMax = Math.max(...allX);
+                xRange = [xMin, xMax];
+            } else {
+                // Log scale: use log10 of positive values for range
+                const positiveX = allX.filter(v => v > 0);
+                if (positiveX.length > 0) {
+                    xRange = [Math.log10(Math.min(...positiveX)), Math.log10(Math.max(...positiveX))];
+                } else {
+                    xRange = undefined;
+                }
+            }
+            
+            if (yScale === 'linear') {
+                const yMin = Math.min(...allY);
+                const yMax = Math.max(...allY);
+                yRange = [yMin, yMax];
+            } else {
+                // Log scale: use log10 of positive values for range
+                const positiveY = allY.filter(v => v > 0);
+                if (positiveY.length > 0) {
+                    yRange = [Math.log10(Math.min(...positiveY)), Math.log10(Math.max(...positiveY))];
+                } else {
+                    yRange = undefined;
+                }
+            }
+            
+            const layout = {
+                title: {
+                    text: mdmFilename,
+                    font: { size: 16, color: '#202124' },
+                    x: 0.01,
+                    xanchor: 'left'
+                },
+                paper_bgcolor: '#ffffff',
+                plot_bgcolor: '#ffffff',
+                font: { family: 'Inter, Segoe UI, system-ui, sans-serif', color: '#333333', size: 12 },
+                xaxis: {
+                    title: xAxisLabel,
+                    type: xScale,
+                    gridcolor: '#eeeeee',
+                    zerolinecolor: '#eeeeee',
+                    showline: false,
+                    minor: {
+                        showgrid: true,
+                        gridcolor: '#f5f5f5'
+                    },
+                    exponentformat: 'e',
+                    automargin: true,
+                    tickmode: 'auto',
+                    nticks: 10,
+                    showticklabels: true,
+                    range: xRange,
+                    autorange: xRange === undefined
+                },
+                yaxis: {
+                    title: yAxisLabel,
+                    type: yScale,
+                    gridcolor: '#eeeeee',
+                    zerolinecolor: '#eeeeee',
+                    showline: false,
+                    minor: {
+                        showgrid: true,
+                        gridcolor: '#f5f5f5'
+                    },
+                    exponentformat: 'e',
+                    automargin: true,
+                    tickmode: 'auto',
+                    nticks: 10,
+                    showticklabels: true,
+                    range: yRange,
+                    autorange: yRange === undefined
+                },
+                legend: {
+                    bgcolor: 'rgba(255,255,255,0)',
+                    borderwidth: 0
+                },
+                margin: { t: 60, r: 40, b: 60, l: 80 },
+                hovermode: 'closest'
+            };
+            
+            const config = {
+                responsive: true,
+                displayModeBar: true,
+                modeBarButtonsToRemove: ['lasso2d', 'select2d'],
+                displaylogo: false
+            };
+            
+            Plotly.newPlot('plot', traces, layout, config);
+        }
+    
+        
+        // Helper to get sweep order for a variable name
+        function getSweepOrder(varName) {
+            const input = parsedInputs.find(inp => inp.name === varName);
+            return input ? input.sweepOrder : Infinity;
+        }
+        
+        // Check if a column is an input variable
+        function isInputVar(varName) {
+            return parsedInputs.some(inp => inp.name === varName);
+        }
+        
+        // Get output variable names
+        const outputNames = outputs.map(line => parseOutputLine(line).name);
+        
+        function updateDataTable(blockValue) {
+            const thead = document.getElementById('table-head');
+            const tbody = document.getElementById('table-body');
+            
+            if (blockValue === 'all') {
+                // Show all data combined
+                if (mdmData.length === 0) return;
+                
+                // Get all column names
+                const sweepVars = Object.keys(mdmData[0].vars);
+                const dataColumns = mdmData[0].columns;
+                
+                // Combine all columns and separate inputs from outputs
+                const allColumns = [...sweepVars, ...dataColumns];
+                const inputColumns = allColumns.filter(col => isInputVar(col));
+                const outputColumns = allColumns.filter(col => !isInputVar(col));
+                
+                // Sort input columns by sweep order (ascending, CON at end)
+                inputColumns.sort((a, b) => getSweepOrder(a) - getSweepOrder(b));
+                
+                // Final column order: sorted inputs, then outputs
+                const orderedColumns = [...inputColumns, ...outputColumns];
+                
+                // Header
+                thead.innerHTML = '<tr><th>#</th>' + 
+                    orderedColumns.map(col => `<th>${col}</th>`).join('') + '</tr>';
+                
+                // Body: combine all blocks
+                let rowNum = 1;
+                let rows = '';
+                mdmData.forEach(block => {
+                    block.data.forEach(row => {
+                        const cells = orderedColumns.map(col => {
+                            // Check if column is from block.vars or row data
+                            const val = block.vars[col] !== undefined ? block.vars[col] : row[col];
+                            return `<td>${formatNumber(val)}</td>`;
+                        }).join('');
+                        rows += `<tr><td>${rowNum++}</td>${cells}</tr>`;
+                    });
+                });
+                tbody.innerHTML = rows;
+            } else {
+                // Show single block
+                const blockIdx = parseInt(blockValue);
+                const block = mdmData[blockIdx];
+                
+                // Get all column names (sweep vars + data columns)
+                const sweepVars = Object.keys(block.vars);
+                const dataColumns = block.columns;
+                
+                // Combine all columns and separate inputs from outputs
+                const allColumns = [...sweepVars, ...dataColumns];
+                const inputColumns = allColumns.filter(col => isInputVar(col));
+                const outputColumns = allColumns.filter(col => !isInputVar(col));
+                
+                // Sort input columns by sweep order
+                inputColumns.sort((a, b) => getSweepOrder(a) - getSweepOrder(b));
+                
+                // Final column order: sorted inputs, then outputs
+                const orderedColumns = [...inputColumns, ...outputColumns];
+                
+                // Header
+                thead.innerHTML = '<tr><th>#</th>' + orderedColumns.map(col => `<th>${col}</th>`).join('') + '</tr>';
+                
+                // Body
+                tbody.innerHTML = block.data.map((row, idx) => {
+                    const cells = orderedColumns.map(col => {
+                        // Check if column is from block.vars or row data
+                        const val = block.vars[col] !== undefined ? block.vars[col] : row[col];
+                        return `<td>${formatNumber(val)}</td>`;
+                    }).join('');
+                    return `<tr><td>${idx + 1}</td>${cells}</tr>`;
+                }).join('');
+            }
+        }
+        
+        function formatNumber(num) {
+            if (num === 0) return '0';
+            const abs = Math.abs(num);
+            if (abs < 1e-12 || abs >= 1e6) {
+                return num.toExponential(6);
+            }
+            return num.toPrecision(6);
+        }
+        
+        function savePlotAsPNG() {
+            Plotly.downloadImage('plot', {
+                format: 'png',
+                width: 1200,
+                height: 600,
+                filename: mdmFilename
+            });
+        }
+        
+        function copyTableToClipboard(theadId, tbodyId) {
+            const thead = document.getElementById(theadId);
+            const tbody = document.getElementById(tbodyId);
+            
+            let text = '';
+            
+            // Header
+            const headerCells = thead.querySelectorAll('th');
+            text += Array.from(headerCells).map(th => th.textContent).join('\t') + '\n';
+            
+            // Body
+            const rows = tbody.querySelectorAll('tr');
+            rows.forEach(row => {
+                const cells = row.querySelectorAll('td');
+                text += Array.from(cells).map(td => td.textContent).join('\t') + '\n';
+            });
+            
+            navigator.clipboard.writeText(text).then(() => {
+                // Find the button that was clicked
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = 'Copied!';
+                btn.classList.add('success');
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.classList.remove('success');
+                }, 1500);
+            });
+        }
+    </script>
+</body>
+</html>
