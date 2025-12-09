@@ -1693,15 +1693,3 @@ def generate_wpro_html_report(csv_filepath: str, auto_open: bool = True) -> Path
         webbrowser.open(f'file://{index_path.resolve()}')
     
     return index_path
-
-
-# Command-line usage
-if __name__ == "__main__":
-    import sys
-    
-    if len(sys.argv) > 1:
-        csv_file = sys.argv[1]
-    else:
-        csv_file = "/Users/sorrymusic/VScode/Projects/mdm library/MyLotA_02/WX-ABench~Simu~MOSFET~WPro_MOSFET_DC~WX_DC_MeasGroup1.csv"
-    
-    generate_wpro_html_report(csv_file)
