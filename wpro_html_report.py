@@ -107,7 +107,7 @@ class WProReportGenerator:
         for wafer in self._df['Wafer'].unique():
             wafer_data = self._df[self._df['Wafer'] == wafer]
             summary.append({
-                'wafer': wafer,
+                'wafer': str(wafer),  # Convert to string to avoid numpy type issues
                 'die_count': wafer_data['Die'].nunique(),
                 'temperatures': sorted(wafer_data['Temperature (C)'].unique().tolist()),
                 'blocks': wafer_data['Block'].unique().tolist(),
@@ -144,26 +144,20 @@ class WProReportGenerator:
         """
         Get pivot table structure with Wafer, Temperature, Device, Parameter as rows
         and Die values as columns with parameter values.
-        
-        This method handles multiple wafers correctly:
-        - Each row is uniquely identified by (Wafer, Temperature, Device, Parameter)
-        - All dies from all wafers are collected to create column headers
-        - Each row contains values only for dies that exist for that wafer/temp/device/parameter combination
-        
         Returns: {
-            'dies': [list of all unique die names across all wafers],
+            'dies': [list of die names],
             'rows': [{
                 'Wafer': ...,
                 'Temperature': ...,
                 'Device': ...,
                 'Parameter': ...,
-                'values': {die_name: value}  # Only dies relevant to this wafer/temp/device/parameter
+                'values': {die_name: value}
             }]
         }
         """
         result_columns = self.get_result_columns()
         
-        # Get all unique dies across all wafers (for table column headers)
+        # Get all unique dies
         all_dies = sorted(self._df['Die'].unique().tolist())
         
         # Dictionary to store rows: key is (Wafer, Temperature, Device, Parameter)
@@ -287,17 +281,10 @@ def organize_mdm_files(mdm_files: List[Path], lot_folder: Path) -> Dict:
 def generate_mdm_html_files(mdm_files: List[Path], lot_folder: Path, report_folder: Path) -> Dict[Path, Path]:
     """
     Generate HTML files for all MDM files, maintaining folder structure.
-    
-    This function handles multiple wafers correctly:
-    - Processes all MDM files regardless of which wafer they belong to
-    - Maintains the folder structure (Wafer_X/...) in the report folder
-    - Returns mapping for all generated HTML files
-    
     Returns a mapping of MDM path to HTML path.
     """
     mdm_to_html = {}
     
-    # Process all MDM files from all wafers
     for mdm_path in mdm_files:
         # Get relative path from lot folder
         rel_path = mdm_path.relative_to(lot_folder)
@@ -338,7 +325,7 @@ def generate_main_report(generator: WProReportGenerator,
     nav_html = build_navigation_tree(mdm_structure, mdm_to_html, lot_folder, report_folder)
     
     # Build stat cards
-    wafer_list = ', '.join([w['wafer'] for w in wafer_summary])
+    wafer_list = ', '.join([str(w['wafer']) for w in wafer_summary])  # Ensure string conversion
     temp_list = ', '.join([str(t) + '°C' for t in temp_summary.keys()])
     
     # Get measurements table data (pivot structure)
@@ -346,11 +333,11 @@ def generate_main_report(generator: WProReportGenerator,
     all_dies = measurements_data['dies']
     table_rows_data = measurements_data['rows']
     
-    # Get unique values for filters
-    unique_wafers = sorted(set([row['Wafer'] for row in table_rows_data]))
-    unique_temperatures = sorted(set([row['Temperature'] for row in table_rows_data]))
-    unique_devices = sorted(set([row['Device'] for row in table_rows_data if row.get('Device')]))
-    unique_params = sorted(set([row['Parameter'] for row in table_rows_data]))
+    # Get unique values for filters (ensure string conversion to avoid numpy type issues)
+    unique_wafers = sorted(set([str(row['Wafer']) for row in table_rows_data]))
+    unique_temperatures = sorted(set([str(row['Temperature']) for row in table_rows_data]))
+    unique_devices = sorted(set([str(row['Device']) for row in table_rows_data if row.get('Device')]))
+    unique_params = sorted(set([str(row['Parameter']) for row in table_rows_data]))
     
     # Build filter checkboxes
     wafer_checkboxes = ''.join([f'<label class="checkbox-item"><input type="checkbox" value="{w}"><span>{w}</span></label>' for w in unique_wafers])
@@ -1569,17 +1556,9 @@ def generate_main_report(generator: WProReportGenerator,
 
 def build_navigation_tree(mdm_structure: Dict, mdm_to_html: Dict[Path, Path], 
                           lot_folder: Path, report_folder: Path) -> str:
-    """
-    Build HTML navigation tree from MDM structure.
-    
-    This function handles multiple wafers correctly:
-    - Iterates through all wafers in the structure
-    - Creates navigation sections for each wafer
-    - Includes links to HTML files for all wafers
-    """
+    """Build HTML navigation tree from MDM structure."""
     html_parts = []
     
-    # Iterate through all wafers (handles multiple wafers correctly)
     for wafer in sorted(mdm_structure.keys()):
         temps = mdm_structure[wafer]
         
