@@ -438,8 +438,7 @@ def generate_main_report(generator: WProReportGenerator,
         }}
         
         .layout {{
-            display: grid;
-            grid-template-columns: 280px 1fr;
+            display: flex;
             min-height: 100vh;
         }}
         
@@ -452,6 +451,28 @@ def generate_main_report(generator: WProReportGenerator,
             top: 0;
             overflow-y: auto;
             padding: 1.5rem;
+            flex-shrink: 0;
+            width: 280px;
+            min-width: 200px;
+            max-width: 600px;
+        }}
+        
+        /* Resizer */
+        .resizer {{
+            width: 4px;
+            background: var(--border-color);
+            cursor: col-resize;
+            flex-shrink: 0;
+            position: relative;
+            transition: background 0.2s;
+        }}
+        
+        .resizer:hover {{
+            background: var(--accent-blue);
+        }}
+        
+        .resizer.active {{
+            background: var(--accent-blue);
         }}
         
         .sidebar-header {{
@@ -554,6 +575,9 @@ def generate_main_report(generator: WProReportGenerator,
         /* Main Content */
         .main {{
             padding: 0;
+            flex: 1;
+            min-width: 0;
+            overflow-x: auto;
         }}
         
         /* Header */
@@ -1134,10 +1158,10 @@ def generate_main_report(generator: WProReportGenerator,
         }}
         
         @media (max-width: 1024px) {{
-            .layout {{
-                grid-template-columns: 1fr;
-            }}
             .sidebar {{
+                display: none;
+            }}
+            .resizer {{
                 display: none;
             }}
             .stats-grid {{
@@ -1157,6 +1181,9 @@ def generate_main_report(generator: WProReportGenerator,
                 {nav_html}
             </nav>
         </aside>
+        
+        <!-- Resizer -->
+        <div class="resizer" id="sidebar-resizer"></div>
         
         <!-- Main Content -->
         <main class="main">
@@ -1295,6 +1322,53 @@ def generate_main_report(generator: WProReportGenerator,
     </div>
     
     <script>
+        // Sidebar resizer functionality
+        const sidebar = document.querySelector('.sidebar');
+        const resizer = document.getElementById('sidebar-resizer');
+        let isResizing = false;
+        let startX = 0;
+        let startWidth = 0;
+        
+        // Load saved width from localStorage
+        const savedWidth = localStorage.getItem('sidebar-width');
+        if (savedWidth) {{
+            sidebar.style.width = savedWidth + 'px';
+        }}
+        
+        resizer.addEventListener('mousedown', (e) => {{
+            isResizing = true;
+            startX = e.clientX;
+            startWidth = sidebar.offsetWidth;
+            resizer.classList.add('active');
+            document.body.style.cursor = 'col-resize';
+            document.body.style.userSelect = 'none';
+            e.preventDefault();
+        }});
+        
+        document.addEventListener('mousemove', (e) => {{
+            if (!isResizing) return;
+            
+            const diff = e.clientX - startX;
+            const newWidth = startWidth + diff;
+            const minWidth = 200;
+            const maxWidth = 600;
+            
+            if (newWidth >= minWidth && newWidth <= maxWidth) {{
+                sidebar.style.width = newWidth + 'px';
+            }}
+        }});
+        
+        document.addEventListener('mouseup', () => {{
+            if (isResizing) {{
+                isResizing = false;
+                resizer.classList.remove('active');
+                document.body.style.cursor = '';
+                document.body.style.userSelect = '';
+                // Save width to localStorage
+                localStorage.setItem('sidebar-width', sidebar.offsetWidth);
+            }}
+        }});
+        
         // Toggle navigation sections
         document.querySelectorAll('.nav-section-header').forEach(header => {{
             header.addEventListener('click', () => {{
@@ -1541,6 +1615,259 @@ def generate_main_report(generator: WProReportGenerator,
         updateFilterButtonText('temperature', currentTempFilters);
         updateFilterButtonText('device', currentDeviceFilters);
         updateFilterButtonText('testparam', currentParamFilters);
+        
+        // Wafer Map functionality
+        const waferMapSvg = document.getElementById('wafer-map-svg');
+        const waferSelect = document.getElementById('wafer-map-wafer-select');
+        const temperatureSelect = document.getElementById('wafer-map-temperature-select');
+        const deviceSelect = document.getElementById('wafer-map-device-select');
+        const parameterSelect = document.getElementById('wafer-map-parameter-select');
+        const heatmapToggle = document.getElementById('wafer-map-heatmap-toggle');
+        const legendDiv = document.getElementById('wafer-map-legend');
+        
+        function parseDieCoordinate(dieStr) {{
+            const match = dieStr.match(/X(-?\\d+)-Y(-?\\d+)/);
+            if (match) {{
+                return {{ x: parseInt(match[1]), y: parseInt(match[2]) }};
+            }}
+            return null;
+        }}
+        
+        function getWaferMapData() {{
+            const wafer = waferSelect.value;
+            const temperature = temperatureSelect.value;
+            const device = deviceSelect.value;
+            const parameter = parameterSelect.value;
+            
+            if (!wafer || !parameter) {{
+                return null;
+            }}
+            
+            const rows = tableBody.querySelectorAll('tr');
+            const dieMap = {{}};
+            
+            rows.forEach(row => {{
+                const rowWafer = row.getAttribute('data-wafer');
+                const rowTemp = row.getAttribute('data-temperature');
+                const rowDevice = row.getAttribute('data-device');
+                const rowParam = row.getAttribute('data-parameter');
+                
+                if (rowWafer !== wafer || rowParam !== parameter) {{
+                    return;
+                }}
+                if (temperature && rowTemp !== temperature) {{
+                    return;
+                }}
+                if (device && rowDevice !== device) {{
+                    return;
+                }}
+                
+                // Get all die cells
+                const cells = row.querySelectorAll('td');
+                // Skip first 9 cells (Wafer, Temperature, Device, Parameter, Min, Max, Average, Median, StdDev)
+                for (let i = 9; i < cells.length; i++) {{
+                    const dieHeader = document.querySelector(`#measurements-table thead th:nth-child(${{i + 1}})`);
+                    if (!dieHeader) continue;
+                    
+                    const dieStr = dieHeader.textContent.trim();
+                    const coord = parseDieCoordinate(dieStr);
+                    if (!coord) continue;
+                    
+                    const cellValue = cells[i].textContent.trim();
+                    if (cellValue && cellValue !== '—') {{
+                        const numValue = parseFloat(cellValue);
+                        if (!isNaN(numValue)) {{
+                            const key = `${{coord.x}},${{coord.y}}`;
+                            // If multiple values for same die, take the last one
+                            dieMap[key] = {{
+                                x: coord.x,
+                                y: coord.y,
+                                value: numValue,
+                                dieStr: dieStr
+                            }};
+                        }}
+                    }}
+                }}
+            }});
+            
+            return Object.values(dieMap);
+        }}
+        
+        function interpolateColor(value, min, max) {{
+            if (max === min) return 'rgb(200, 200, 200)';
+            const ratio = (value - min) / (max - min);
+            // Blue to red gradient
+            const r = Math.round(255 * ratio);
+            const b = Math.round(255 * (1 - ratio));
+            return `rgb(${{r}}, 100, ${{b}})`;
+        }}
+        
+        function renderWaferMap() {{
+            const data = getWaferMapData();
+            
+            // Clear SVG
+            waferMapSvg.innerHTML = '';
+            legendDiv.style.display = 'none';
+            
+            if (!data || data.length === 0) {{
+                const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                text.setAttribute('x', '400');
+                text.setAttribute('y', '300');
+                text.setAttribute('text-anchor', 'middle');
+                text.setAttribute('fill', 'var(--text-muted)');
+                text.textContent = 'Select wafer and parameter to display map';
+                waferMapSvg.appendChild(text);
+                return;
+            }}
+            
+            // Find bounds
+            const xCoords = data.map(d => d.x);
+            const yCoords = data.map(d => d.y);
+            const values = data.map(d => d.value);
+            
+            const minX = Math.min(...xCoords);
+            const maxX = Math.max(...xCoords);
+            const minY = Math.min(...yCoords);
+            const maxY = Math.max(...yCoords);
+            
+            const minValue = Math.min(...values);
+            const maxValue = Math.max(...values);
+            
+            // Calculate grid dimensions
+            const width = maxX - minX + 1;
+            const height = maxY - minY + 1;
+            
+            // Die size (pixels)
+            const dieSize = 40;
+            const padding = 60;
+            
+            // Calculate SVG dimensions
+            const svgWidth = Math.max(800, width * dieSize + padding * 2);
+            const svgHeight = Math.max(600, height * dieSize + padding * 2);
+            waferMapSvg.setAttribute('width', svgWidth);
+            waferMapSvg.setAttribute('height', svgHeight);
+            
+            // Create a map for quick lookup
+            const dataMap = {{}};
+            data.forEach(d => {{
+                const key = `${{d.x}},${{d.y}}`;
+                dataMap[key] = d;
+            }});
+            
+            // Draw grid (Y from bottom to top, X from left to right)
+            // X0-Y0 should be in the center
+            const centerX = 0;
+            const centerY = 0;
+            
+            // Calculate offset to center X0-Y0
+            const offsetX = (svgWidth / 2) - (centerX - minX) * dieSize - dieSize / 2;
+            const offsetY = (svgHeight / 2) - (maxY - centerY) * dieSize - dieSize / 2;
+            
+            // Draw all dies in the grid
+            for (let y = maxY; y >= minY; y--) {{
+                for (let x = minX; x <= maxX; x++) {{
+                    const key = `${{x}},${{y}}`;
+                    const dieData = dataMap[key];
+                    
+                    const xPos = offsetX + (x - minX) * dieSize;
+                    const yPos = offsetY + (maxY - y) * dieSize;
+                    
+                    const rect = document.createElementNS('http://www.w3.org/2000/svg', 'rect');
+                    rect.setAttribute('x', xPos);
+                    rect.setAttribute('y', yPos);
+                    rect.setAttribute('width', dieSize - 2);
+                    rect.setAttribute('height', dieSize - 2);
+                    rect.setAttribute('class', 'wafer-map-die');
+                    
+                    if (dieData) {{
+                        if (heatmapToggle.checked) {{
+                            const color = interpolateColor(dieData.value, minValue, maxValue);
+                            rect.setAttribute('fill', color);
+                        }} else {{
+                            rect.setAttribute('fill', 'var(--bg-primary)');
+                        }}
+                        
+                        // Add value text
+                        const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+                        text.setAttribute('x', xPos + dieSize / 2);
+                        text.setAttribute('y', yPos + dieSize / 2);
+                        text.setAttribute('class', 'wafer-map-die-text');
+                        // Format number for display
+                        let formattedValue;
+                        const absValue = Math.abs(dieData.value);
+                        if (absValue === 0) {{
+                            formattedValue = '0';
+                        }} else if (absValue < 0.001 || absValue >= 1e6) {{
+                            formattedValue = dieData.value.toExponential(2);
+                        }} else {{
+                            formattedValue = dieData.value.toPrecision(4);
+                        }}
+                        text.textContent = formattedValue;
+                        waferMapSvg.appendChild(text);
+                    }} else {{
+                        rect.setAttribute('fill', 'var(--bg-tertiary)');
+                        rect.setAttribute('opacity', '0.3');
+                    }}
+                    
+                    waferMapSvg.appendChild(rect);
+                }}
+            }}
+            
+            // Draw axes labels
+            // X axis (left to right)
+            const xAxisLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            xAxisLabel.setAttribute('x', svgWidth - 30);
+            xAxisLabel.setAttribute('y', svgHeight - 20);
+            xAxisLabel.setAttribute('class', 'wafer-map-axis-label');
+            xAxisLabel.textContent = 'X →';
+            waferMapSvg.appendChild(xAxisLabel);
+            
+            // Y axis (bottom to top)
+            const yAxisLabel = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            yAxisLabel.setAttribute('x', 20);
+            yAxisLabel.setAttribute('y', 30);
+            yAxisLabel.setAttribute('class', 'wafer-map-axis-label');
+            yAxisLabel.textContent = '↑ Y';
+            waferMapSvg.appendChild(yAxisLabel);
+            
+            // Draw center marker (X0-Y0)
+            const centerXPos = offsetX + (centerX - minX) * dieSize;
+            const centerYPos = offsetY + (maxY - centerY) * dieSize;
+            const centerCircle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+            centerCircle.setAttribute('cx', centerXPos + dieSize / 2);
+            centerCircle.setAttribute('cy', centerYPos + dieSize / 2);
+            centerCircle.setAttribute('r', 3);
+            centerCircle.setAttribute('fill', 'var(--accent-red)');
+            waferMapSvg.appendChild(centerCircle);
+            
+            // Show legend if heatmap is enabled
+            if (heatmapToggle.checked) {{
+                legendDiv.style.display = 'flex';
+                document.getElementById('wafer-map-legend-min').style.background = interpolateColor(minValue, minValue, maxValue);
+                document.getElementById('wafer-map-legend-max').style.background = interpolateColor(maxValue, minValue, maxValue);
+                
+                // Format legend values
+                function formatLegendValue(val) {{
+                    const absVal = Math.abs(val);
+                    if (absVal === 0) return '0';
+                    if (absVal < 0.001 || absVal >= 1e6) return val.toExponential(3);
+                    return val.toPrecision(4);
+                }}
+                
+                document.getElementById('wafer-map-legend-min-value').textContent = `Min: ${{formatLegendValue(minValue)}}`;
+                document.getElementById('wafer-map-legend-max-value').textContent = `Max: ${{formatLegendValue(maxValue)}}`;
+            }}
+        }}
+        
+        // Event listeners for wafer map controls
+        waferSelect.addEventListener('change', renderWaferMap);
+        temperatureSelect.addEventListener('change', renderWaferMap);
+        deviceSelect.addEventListener('change', renderWaferMap);
+        parameterSelect.addEventListener('change', renderWaferMap);
+        heatmapToggle.addEventListener('change', renderWaferMap);
+        
+        // Initial render
+        renderWaferMap();
     </script>
 </body>
 </html>
@@ -1613,9 +1940,9 @@ def build_navigation_tree(mdm_structure: Dict, mdm_to_html: Dict[Path, Path],
                         if mdm_path in mdm_to_html:
                             html_path = mdm_to_html[mdm_path]
                             rel_link = html_path.relative_to(report_folder)
-                            # Extract measurement type from filename
-                            meas_type = mdm_path.stem.split('~')[-1] if '~' in mdm_path.stem else mdm_path.stem
-                            wafer_html += f'<a class="nav-item" href="{rel_link}" target="_blank">{meas_type}</a>'
+                            # Use full HTML filename without .html extension
+                            html_filename = html_path.stem  # This removes the .html extension
+                            wafer_html += f'<a class="nav-item" href="{rel_link}" target="_blank">{html_filename}</a>'
                 
                 wafer_html += '</div></div>'  # Close die
             
@@ -1693,3 +2020,5 @@ def generate_wpro_html_report(csv_filepath: str, auto_open: bool = True) -> Path
         webbrowser.open(f'file://{index_path.resolve()}')
     
     return index_path
+
+generate_wpro_html_report("MyLotA_02/WX-ABench~Simu~MOSFET~WPro_MOSFET_DC~WX_DC_MeasGroup1.csv")
